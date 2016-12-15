@@ -153,11 +153,12 @@ func (b *Bridge) Start(config *viper.Viper) error {
 		// Need to setup a new hue bridge here
 		return errors.New("No valid Hue bridge found in config")
 	}
-
-	client, err := mqtt.NewClient(
-		"tcp://127.0.0.1:1883",
-		mqtt.Timeout(5*time.Second),
-	)
+	var userString string
+	if config.IsSet("MQTT.User") {
+		userString = config.GetString("MQTT.User") + ":" +
+			config.GetString("MQTT.Pass") + "@"
+	}
+	client, err := mqtt.NewClient("tcp://" + userString + "127.0.0.1:1883")
 
 	if err != nil {
 		return err
