@@ -15,7 +15,7 @@
 package hue
 
 import (
-	"errors"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +24,7 @@ import (
 	"github.com/casaplatform/casa/cmd/casa/environment"
 	"github.com/casaplatform/mqtt"
 	"github.com/inhies/GoHue"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
@@ -94,6 +95,29 @@ func (b *Bridge) handler(msg *casa.Message, err error) {
 	case msg != nil:
 		m := strings.Split(msg.Topic, "/")
 
+		if m[len(m)-1] == "Register" {
+			newbridge, err := hue.NewBridge(m[len(m)-2])
+			if err != nil {
+				b.Log("Unable to connect to Hue bridge:", err)
+				return
+			}
+			b.Log("Press the link button on the Hue bridge")
+			var token string
+			for i := 0; i < 12; i++ {
+				time.Sleep(5 * time.Second)
+				token, err = newbridge.CreateUser("Casa" + strconv.FormatInt(time.Now().Unix(), 10))
+				if err != nil {
+					b.Log(err)
+				}
+			}
+			if token == "" {
+				b.Log("Unable to create user on Hue bridge. Please try again")
+				return
+			}
+			b.Log("Token created:", token)
+
+		}
+
 		// We only care about commands sent to us
 		if m[len(m)-1] != "Set" {
 			return
@@ -131,7 +155,7 @@ func (b *Bridge) Start(config *viper.Viper) error {
 	}
 
 	client, err := mqtt.NewClient(
-		config.GetString("MQTT.Listen"),
+		"tcp://127.0.0.1:1883",
 		mqtt.Timeout(5*time.Second),
 	)
 
