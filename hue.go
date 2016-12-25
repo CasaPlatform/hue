@@ -30,8 +30,6 @@ import (
 
 const (
 	Namespace = "Hue"
-	SvcPrefix = "Service"
-	DevPrefix = "Device"
 )
 
 // TODO: Add more colors from http://www.developers.meethue.com/documentation/hue-xy-values
@@ -184,7 +182,7 @@ func (b *Bridge) Start(config *viper.Viper) error {
 
 	for i := 0; i < len(lights); i++ {
 		l := lights[i]
-		id := Namespace + "/" + bridge.Info.Device.FriendlyName + "/Light/" + l.Name
+		id := "Service/" + Namespace + "/" + bridge.Info.Device.FriendlyName + "/Light/" + l.Name
 		light := &Light{
 			Light:     &l,
 			Path:      id,
@@ -221,7 +219,7 @@ func (b *Bridge) Start(config *viper.Viper) error {
 			}
 		}
 
-		err := b.client.Subscribe(id + "/#")
+		err := b.client.Subscribe("Service/" + Namespace + "/#")
 		if err != nil {
 			return err
 		}
